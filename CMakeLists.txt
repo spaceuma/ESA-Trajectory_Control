@@ -23,8 +23,8 @@ ADD_LIBRARY(waypoint_navigation SHARED WaypointNavigation.cpp)
 #need to link to some other libraries ? just add them here
 #TARGET_LINK_LIBRARIES(driver png jpeg)
 
-ADD_EXECUTABLE(WaypointNavigationTest WaypointNavigationTest.cpp)
-TARGET_LINK_LIBRARIES(WaypointNavigationTest waypoint_navigation)
+# ADD_EXECUTABLE(WaypointNavigationTest WaypointNavigationTest.cpp)
+# TARGET_LINK_LIBRARIES(WaypointNavigationTest waypoint_navigation)
  
 CONFIGURE_FILE(Doxyfile.in Doxyfile @ONLY)
 ADD_CUSTOM_TARGET(doc doxygen Doxyfile)
