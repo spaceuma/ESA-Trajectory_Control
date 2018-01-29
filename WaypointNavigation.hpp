@@ -23,8 +23,8 @@
 #define WAYPOINT_NAVIGATION_HPP
 #include <Eigen/Geometry>
 #include <vector>
-#include <base/samples/rigid_body_state.h>
-#include <base/waypoint.h>
+#include <base/samples/RigidBodyState.hpp>
+#include <base/Waypoint.hpp>
 #include <base/commands/Motion2D.hpp>
 
 namespace waypoint_navigation_lib{
