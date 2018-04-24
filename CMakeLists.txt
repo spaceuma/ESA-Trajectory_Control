@@ -10,7 +10,7 @@ ADD_DEFINITIONS(-Wall)
 #ADD_EXECUTABLE(driver main.cpp interface.cpp)
 find_package(PkgConfig)
 
-pkg_check_modules(BASE_TYPES REQUIRED "base-types")
+pkg_check_modules(BASE_TYPES REQUIRED "base-types" "base-lib")
 INCLUDE_DIRECTORIES(${BASE_TYPES_INCLUDE_DIRS})
 LINK_DIRECTORIES(${BASE_TYPES_LIBRARY_DIRS})
 

@@ -26,10 +26,12 @@
 #include <base/samples/RigidBodyState.hpp>
 #include <base/Waypoint.hpp>
 #include <base/commands/Motion2D.hpp>
+#include <base-logging/Logging.hpp>
+
+#define BASE_LOG_DISABLE
+#define BASE_LOG_NAMESPACE waypoint_navigation
 
 namespace waypoint_navigation_lib{
-
-#define WAYPOINT_NAVIGATION_DEBUG 0
 
 enum NavigationState{
       DRIVING=0,        // 0
