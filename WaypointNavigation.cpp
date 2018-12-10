@@ -22,6 +22,8 @@
 #include "WaypointNavigation.hpp"
 #include <iostream>
 
+#define BASE_LOG_NAMESPACE waypoint_navigation_lib
+
 namespace waypoint_navigation_lib{
 
     WaypointNavigation::WaypointNavigation()
