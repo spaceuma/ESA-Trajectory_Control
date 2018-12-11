@@ -22,7 +22,7 @@
 #include "WaypointNavigation.hpp"
 #include <iostream>
 
-#define BASE_LOG_NAMESPACE waypoint_navigation_lib
+#include <base-logging/Logging.hpp>
 
 namespace waypoint_navigation_lib{
 

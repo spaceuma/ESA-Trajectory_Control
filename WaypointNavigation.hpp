@@ -26,9 +26,6 @@
 #include <base/samples/RigidBodyState.hpp>
 #include <base/Waypoint.hpp>
 #include <base/commands/Motion2D.hpp>
-#include <base-logging/Logging.hpp>
-
-#define BASE_LOG_DISABLE
 
 namespace waypoint_navigation_lib{
 
