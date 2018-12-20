@@ -83,7 +83,7 @@ namespace waypoint_navigation_lib{
     // If invalid pose is received, it is discarded and false is returned
     bool WaypointNavigation::setPose(base::samples::RigidBodyState& pose)
     {
-        if( isnan(pose.position(0)) || isnan(pose.position(1)) ){
+        if( std::isnan(pose.position(0)) || std::isnan(pose.position(1)) ){
             // Position data are not valid, pose will not be set
             LOG_DEBUG_S << "Position is not valid!";
             return false;
