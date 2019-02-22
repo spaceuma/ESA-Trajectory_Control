@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 2.6)
 #add definitions, compiler switches, etc.
 ADD_DEFINITIONS(-Wall)
 ADD_DEFINITIONS(-DBASE_LOG_NAMESPACE=${PROJECT_NAME}_lib)
-ADD_DEFINITIONS(-DBASE_LOG_DEBUG)
+ADD_DEFINITIONS(-DBASE_LOG_INFO)
 
 #list all source files here
 #ADD_EXECUTABLE(driver main.cpp interface.cpp)
