@@ -22,10 +22,14 @@
 #pragma once
 
 #include <Eigen/Geometry>
-#include <base/Waypoint.hpp>
-#include <base/commands/Motion2D.hpp>
-#include <base/samples/RigidBodyState.hpp>
+#include "Waypoint.hpp"
+#include "MotionCommand.h"
+#include "BasePose.hpp"
+#include "Time.hpp"
 #include <vector>
+
+using namespace base;
+using namespace proxy_library;
 
 namespace waypoint_navigation_lib
 {
@@ -47,26 +51,26 @@ class WaypointNavigation
     WaypointNavigation();
 
     // Set positon and orientation, where to drive to
-    void setLookaheadPoint(base::Waypoint& pose);
+    void setLookaheadPoint(Waypoint& pose);
 
     // Set current orientation and position,
     // with a validity check (to avoid NaNs from Vicon)
     // If invalid pose is received, it is discarded and false is returned
-    bool setPose(base::samples::RigidBodyState& pose);
+    bool setPose(Pose& pose);
 
     // Sets the trajecory the robot should follow
     // and calculates the distances between consecutive waypoints
-    void setTrajectory(std::vector<base::Waypoint*>& t);
+    void setTrajectory(std::vector<Waypoint*>& t);
 
     // Returns the trajectory
-    const std::vector<base::Waypoint*>& getTrajectory() const { return trajectory; }
+    const std::vector<Waypoint*>& getTrajectory() const { return trajectory; }
 
     NavigationState getNavigationState();
     void setNavigationState(NavigationState state);
 
-    const base::Waypoint* getLookaheadPoint();
+    const Waypoint* getLookaheadPoint();
 
-    bool update(base::commands::Motion2D& mc);
+    bool update(MotionCommand& mc);
 
     bool configure(double minR, double tv, double rv, double cr, double lad, bool backward);
 
@@ -75,7 +79,7 @@ class WaypointNavigation
 
     // Calculates a motion command (Ackermann or Point turn)
     // given the robot pose and DRIVING mode
-    void getMovementCommand(base::commands::Motion2D& mc);
+    void getMovementCommand(MotionCommand& mc);
 
     bool getProgressOnSegment(int segmentNumber,
                               double& progress,
@@ -110,24 +114,24 @@ class WaypointNavigation
     double alignment_deadband, alignment_saturation;
     double headingErr, alignment_P, alignment_D;
     bool pd_initialized;
-    base::Time tprev;
+    Time tprev;
 
-    base::samples::RigidBodyState curPose;
-    base::Waypoint targetPose;
+    Pose curPose;
+    Waypoint targetPose;
 
     std::vector<double>* distanceToNext;
-    std::vector<base::Waypoint*> trajectory;
-    base::Waypoint lookaheadPoint;
+    std::vector<Waypoint*> trajectory;
+    Waypoint lookaheadPoint;
     int currentSegment;
 
-    base::Vector2d w1, w2, l1, l2, xr;
+    Vector2d w1, w2, l1, l2, xr;
 
     // Helper function for setting values of Vector2d with X, Y of a trajectory waypoint
-    bool setSegmentWaypoint(base::Vector2d& waypoint, int indexSegment);
+    bool setSegmentWaypoint(Vector2d& waypoint, int indexSegment);
 
     // Helper function for finding the closes point on the path segment
     // from the current position of the robot
-    base::Vector2d getClosestPointOnPath();
+    Vector2d getClosestPointOnPath();
 
     void initilalizeCurrentSegment();
 

@@ -17,12 +17,17 @@
  * Date of creation: Dec 2016
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ *
+ * Modified by J. Ricardo Sanchez Ibanez, ricardosan@uma.es
+ * 
+ * ADE Project (OG10)
+ *
+ * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  */
 
 #include "WaypointNavigation.hpp"
 #include <iostream>
 
-#include <base-logging/Logging.hpp>
 
 namespace waypoint_navigation_lib
 {
@@ -54,7 +59,7 @@ WaypointNavigation::WaypointNavigation()
     pd_initialized = false;
 
     // Velocity
-    translationalVelocity = 0.05;  // [m/s]
+    translationalVelocity = 0.1;  // [m/s]
 
     // Distances
     corridor = .2;
@@ -62,26 +67,32 @@ WaypointNavigation::WaypointNavigation()
     distanceToNext = new std::vector<double>();
 }
 
-NavigationState WaypointNavigation::getNavigationState() { return mNavigationState; }
+NavigationState WaypointNavigation::getNavigationState()
+{
+    return mNavigationState;
+}
 
 void WaypointNavigation::setNavigationState(NavigationState state)
 {
     if (mNavigationState != state)
     {
-        LOG_DEBUG_S << "Changing nav. state from " << mNavigationState << " to " << state;
+        //LOG_DEBUG_S << "Changing nav. state from " << mNavigationState << " to " << state;
         mNavigationState = state;
         pd_initialized = false;
     }
 }
 
-double WaypointNavigation::getLookaheadDistance() { return lookaheadDistance; }
+double WaypointNavigation::getLookaheadDistance()
+{
+    return lookaheadDistance;
+}
 
-bool WaypointNavigation::setPose(base::samples::RigidBodyState& pose)
+bool WaypointNavigation::setPose(Pose& pose)
 {
     if (std::isnan(pose.position(0)) || std::isnan(pose.position(1)))
     {
         // Position data are not valid, pose will not be set
-        LOG_DEBUG_S << "Position is not valid!";
+        //LOG_DEBUG_S << "Position is not valid!";
         return false;
     }
     else
@@ -90,8 +101,18 @@ bool WaypointNavigation::setPose(base::samples::RigidBodyState& pose)
         xr = base::Vector2d(pose.position(0), pose.position(1));
         if (!poseSet && !trajectory.empty())
         {
-            w1 << curPose.position(0), curPose.position(1);
-            setSegmentWaypoint(w2, currentSegment);
+            // In case the robot is out of the first waypoint,
+	    // the state will be OUT_OF_BOUNDARIES
+            if ((trajectory.size() > 1)&&(currentSegment == 0))
+	    {
+                setSegmentWaypoint(w1, currentSegment);
+                setSegmentWaypoint(w2, currentSegment + 1);
+	    }
+	    else
+	    {
+                w1 << curPose.position(0), curPose.position(1);
+                setSegmentWaypoint(w2, currentSegment);
+	    }
             setNavigationState(DRIVING);
         }
         poseSet = true;
@@ -106,13 +127,13 @@ void WaypointNavigation::setLookaheadPoint(base::Waypoint& waypoint)
 }
 
 // Get the movement command from current pose to the current lookahead point
-void WaypointNavigation::getMovementCommand(base::commands::Motion2D& mc)
+void WaypointNavigation::getMovementCommand(MotionCommand& mc)
 {
     if (!targetSet || !poseSet)
     {
-        LOG_DEBUG_S << "No target or pose specified";
-        mc.translation = 0;
-        mc.rotation = 0;
+        //LOG_DEBUG_S << "No target or pose specified";
+        mc.m_speed_ms = 0;
+        mc.m_turnRate_rads = 0;
         return;
     }
 
@@ -139,8 +160,8 @@ void WaypointNavigation::getMovementCommand(base::commands::Motion2D& mc)
     if (fabs(lookaheadPointRCF.y()) <= 0.001)
     {  // Straight line motion if dY below [1mm]
         // std::cout << "Straight line case" << std::endl;
-        mc.translation = sign * translationalVelocity;
-        mc.rotation = 0;
+        mc.m_speed_ms = sign * translationalVelocity;
+        mc.m_turnRate_rads = 0;
     }
     else
     {  // Turn Required
@@ -171,13 +192,13 @@ void WaypointNavigation::getMovementCommand(base::commands::Motion2D& mc)
         {
             // Point turn required
             // Author's comment: Steering command saturation could be used instead:
-            mc.translation = 0;
-            mc.rotation = targetHeading > 0 ? rotationalVelocity : -rotationalVelocity;
+            mc.m_speed_ms = 0;
+            mc.m_turnRate_rads = targetHeading > 0 ? rotationalVelocity : -rotationalVelocity;
         }
         else
         {  // ACKERMANN TURN CASE
-            mc.translation = sign * translationalVelocity;
-            mc.rotation = mc.translation / turn_radius;
+            mc.m_speed_ms = sign * translationalVelocity;
+            mc.m_turnRate_rads = mc.m_speed_ms / turn_radius;
         }
         // Transform target heading to WCF
         targetHeading += curPose.getYaw();
@@ -257,7 +278,7 @@ void WaypointNavigation::setTrajectory(std::vector<base::Waypoint*>& t)
 }
 
 // MAIN PATH FOLLOWING UPDATE FUNCTION CALLED FROM THE COMPONENT UPDATE HOOK
-bool WaypointNavigation::update(base::commands::Motion2D& mc)
+bool WaypointNavigation::update(MotionCommand& mc)
 {
     // 1) Update the current SEGMENT
     // Select the segment such that robot is not within the immediate reach of the 2nd Waypoint
@@ -319,12 +340,12 @@ bool WaypointNavigation::update(base::commands::Motion2D& mc)
                     setNavigationState(DRIVING);
                 }
             }
-            LOG_DEBUG_S << "Final phase:" << (finalPhase ? "T" : "F") << std::endl
+            /*LOG_DEBUG_S << "Final phase:" << (finalPhase ? "T" : "F") << std::endl
                         << "\t Dist remng.   \t" << distToNext << " m" << std::endl
                         << "\t Heading error \t" << headingErr * 180 / M_PI << "/"
                         << trajectory.back()->tol_heading * 180 / M_PI << " deg" << std::endl
                         << "\t Pos. err. est.\t" << posErr << "/" << trajectory.back()->tol_position
-                        << "m ";
+                        << "m ";*/
             break;
         }
     }
@@ -335,12 +356,6 @@ bool WaypointNavigation::update(base::commands::Motion2D& mc)
 
     // 3) Calculate the distance from the nominal trajectory
     distanceToPath = (xr - xi).norm();
-
-    /*
-       std::cout << "Current segment:\t"   << currentSegment   << std::endl;
-       std::cout << "Dist. from nominal:\t" << distanceToPath  << std::endl;
-       */
-
     NavigationState currentState = getNavigationState();
 
     /* -------------------------------------------
@@ -354,8 +369,8 @@ bool WaypointNavigation::update(base::commands::Motion2D& mc)
             if (distanceToPath >= corridor)
             {
                 setNavigationState(OUT_OF_BOUNDARIES);
-                mc.translation = 0;
-                mc.rotation = 0;
+                mc.m_speed_ms = 0;
+                mc.m_turnRate_rads = 0;
                 return false;
             }
             double distance;  // Available distance in the current segment.
@@ -370,7 +385,7 @@ bool WaypointNavigation::update(base::commands::Motion2D& mc)
             // i) Get the look ahead point segment
             base::Vector2d lineVector, lookaheadPoint2D;
 
-            LOG_DEBUG_S << "Lookahead Distance: " << lookaheadDistanceAdaptive << "/" << distance;
+            //LOG_DEBUG_S << "Lookahead Distance: " << lookaheadDistanceAdaptive << "/" << distance;
             if (distance > lookaheadDistanceAdaptive)  // Lookahead within same seg.
             {
                 // ii) Get the look ahead point in the current segment
@@ -404,7 +419,7 @@ bool WaypointNavigation::update(base::commands::Motion2D& mc)
 
             // iii) Get motion command to the lookahead point
             getMovementCommand(mc);
-            if (fabs(mc.translation) < 1e-6)
+            if (fabs(mc.m_speed_ms) < 1e-6)
             {
                 setNavigationState(ALIGNING);
                 // Use the Angle To Target as Target heading
@@ -413,7 +428,16 @@ bool WaypointNavigation::update(base::commands::Motion2D& mc)
         }  // --- end of DRIVING ---
         case ALIGNING:
         {
-            mc.translation = 0;  // Ensure
+            // OUT OF BOUNDARIES CHECK
+            if (distanceToPath >= corridor)
+            {
+                setNavigationState(OUT_OF_BOUNDARIES);
+                mc.m_speed_ms = 0;
+                mc.m_turnRate_rads = 0;
+                return false;
+            }
+
+            mc.m_speed_ms = 0;  // Ensure
             base::Time t1 = base::Time::now();
 
             double disalignmentTolerance, headingErrPrev, headingErrDiff, alignment_dt;
@@ -426,56 +450,63 @@ bool WaypointNavigation::update(base::commands::Motion2D& mc)
             wrapAngle(headingErr);
             saturation(headingErr, alignment_saturation);
 
-            LOG_DEBUG_S << "Target headin " << targetHeading * 180.0 / M_PI << "deg";
-            LOG_DEBUG_S << "Heading error " << headingErr * 180.0 / M_PI << " deg";
+            //LOG_DEBUG_S << "Target headin " << targetHeading * 180.0 / M_PI << "deg";
+            //LOG_DEBUG_S << "Heading error " << headingErr * 180.0 / M_PI << " deg";
 
             headingErrDiff = headingErr - headingErrPrev;
 
             if (pd_initialized)
             {
                 alignment_dt = (t1 - tprev).toMilliseconds() / 1000.0;
-                headingErrDiff /= alignment_dt;
+		if (alignment_dt == 0)
+		{
+                    headingErrDiff = 0;
+		}
+		else
+		{
+                    headingErrDiff /= alignment_dt;
+		}
                 saturation(headingErrDiff, 10.0 / 180.0 * M_PI);
-                LOG_DEBUG_S << "d(heading err)/dt = " << headingErrDiff * 180 / M_PI << "deg/"
-                            << alignment_dt << "sec = " << headingErrDiff;
+                //LOG_DEBUG_S << "d(heading err)/dt = " << headingErrDiff * 180 / M_PI << "deg/"
+                            //<< alignment_dt << "sec = " << headingErrDiff;
             }
             else
             {
                 pd_initialized = true;
                 headingErrDiff = 0;
-                LOG_DEBUG_S << "PD re-initialized";
+                //LOG_DEBUG_S << "PD re-initialized";
             }
 
             if (fabs(headingErr) < disalignmentTolerance)
             {
-                mc.rotation = 0;
+                mc.m_turnRate_rads = 0;
                 setNavigationState(DRIVING);
             }
             else
             {
-                mc.rotation = alignment_P * headingErr + alignment_D * headingErrDiff;
+                mc.m_turnRate_rads = alignment_P * headingErr + alignment_D * headingErrDiff;
             }
 
-            saturation(mc.rotation, rotationalVelocity);
+            saturation(mc.m_turnRate_rads, rotationalVelocity);
             tprev = t1;
 
-            LOG_DEBUG_S << "Aligning:\t " << 180.0 / M_PI * curPose.getYaw() << " to "
+            /*LOG_DEBUG_S << "Aligning:\t " << 180.0 / M_PI * curPose.getYaw() << " to "
                         << 180.0 / M_PI * targetHeading << "+-"
                         << 180.0 / M_PI * disalignmentTolerance
                         << " deg,\nrv = " << 180.0 / M_PI * alignment_P * headingErr << " + "
                         << 180.0 / M_PI * alignment_D * headingErrDiff << " ~ "
-                        << 180.0 / M_PI * mc.rotation << "deg/s ";
+                        << 180.0 / M_PI * mc.rotation << "deg/s ";*/
 
-            LOG_DEBUG_S << "e-: " << 180.0 / M_PI * headingErrPrev << "deg.";
-            LOG_DEBUG_S << "e:  " << 180.0 / M_PI * headingErr << "deg.";
-            LOG_DEBUG_S << "de: " << 180.0 / M_PI * headingErrDiff << "deg.";
+            //LOG_DEBUG_S << "e-: " << 180.0 / M_PI * headingErrPrev << "deg.";
+           // LOG_DEBUG_S << "e:  " << 180.0 / M_PI * headingErr << "deg.";
+            //LOG_DEBUG_S << "de: " << 180.0 / M_PI * headingErrDiff << "deg.";
 
             break;
         }  // --- end of ALIGNING ---
         case OUT_OF_BOUNDARIES:
         {
-            mc.translation = 0;
-            mc.rotation = 0;
+            mc.m_speed_ms = 0;
+            mc.m_turnRate_rads = 0;
             double progress, distAlong, distPerpendicular;
             // Try the current segment first
             if (currentSegment > 0)
@@ -515,9 +546,9 @@ bool WaypointNavigation::update(base::commands::Motion2D& mc)
             }
             break;
         }
-        case TARGET_REACHED: LOG_DEBUG_S << "Waypoint Navigation: Target Reached."; break;
-        case NO_TRAJECTORY: LOG_DEBUG_S << "Invalid trajectory."; break;
-        default: LOG_DEBUG_S << "Default case."; break;
+        case TARGET_REACHED: /*LOG_DEBUG_S << "Waypoint Navigation: Target Reached.";*/ break;
+        case NO_TRAJECTORY: /*LOG_DEBUG_S << "Invalid trajectory.";*/ break;
+        default: /*LOG_DEBUG_S << "Default case.";*/ break;
     }
     return true;
 }
@@ -563,7 +594,7 @@ bool WaypointNavigation::configure(double minR,
 {
     std::string reverse_allowed = backwards ? "Permitted" : "Forbidden";
 
-    LOG_DEBUG_S << "------------------------------------\n"
+    /*LOG_DEBUG_S << "------------------------------------\n"
                 << "Received Path Tracker config values:\n"
                 << "Min. turn radius:\t" << minR << " m.\n"
                 << "Translat. vel.:\t\t" << tv << " m/s.\n"
@@ -571,7 +602,7 @@ bool WaypointNavigation::configure(double minR,
                 << "Clearance:\t\t" << cr << " m.\n"
                 << "Lookahead dist.\t\t" << lad << " m.\n"
                 << "Reverse:\t\t" << reverse_allowed << std::endl
-                << "------------------------------------";
+                << "------------------------------------";*/
 
     // All config. parameters must be possitive
     if (minR > 0 && tv > 0 && rv > 0 && cr > 0 && lad > 0)
@@ -657,7 +688,7 @@ void WaypointNavigation::setCurrentSegment(int segmentNumber)
 {
     if (segmentNumber < 0)
     {
-        LOG_DEBUG_S << "Attemp to set invalid segment number";
+        //LOG_DEBUG_S << "Attemp to set invalid segment number";
     }
     if (segmentNumber < 1)
     {
@@ -688,10 +719,10 @@ void WaypointNavigation::initilalizeCurrentSegment()
         {
             maxIndex = i;
         }
-        LOG_DEBUG_S << "Segment: " << i << ", progress: " << progress << ", dist from nominal "
-                    << distPerpend;
+        /*LOG_DEBUG_S << "Segment: " << i << ", progress: " << progress << ", dist from nominal "
+                    << distPerpend;*/
     }
-    LOG_DEBUG_S << "Segment set to: " << maxIndex;
+    //LOG_DEBUG_S << "Segment set to: " << maxIndex;
     setCurrentSegment(maxIndex);
 }
 
