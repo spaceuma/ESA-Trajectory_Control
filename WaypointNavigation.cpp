@@ -41,7 +41,7 @@ WaypointNavigation::WaypointNavigation()
     finalPhase = false;
 
     // Ackermann turn parameters
-    minTurnRadius = 0.6;  // (in meters)
+    minTurnRadius = 1.0;  // (in meters)
     // maxDisplacementAckermannTurn = 0.25; // (meters from straight line to the next point)
     maxDisplacementAckermannTurn = 0.5;  // (meters from straight line to the next point)
 
@@ -62,8 +62,8 @@ WaypointNavigation::WaypointNavigation()
     translationalVelocity = 0.1;  // [m/s]
 
     // Distances
-    corridor = .2;
-    lookaheadDistance = .6;
+    corridor = .3;
+    lookaheadDistance = 1.0;
     distanceToNext = new std::vector<double>();
 }
 
