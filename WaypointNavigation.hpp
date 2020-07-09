@@ -28,8 +28,6 @@
 #include "Time.hpp"
 #include <vector>
 
-using namespace base;
-using namespace proxy_library;
 
 namespace waypoint_navigation_lib
 {
@@ -51,26 +49,26 @@ class WaypointNavigation
     WaypointNavigation();
 
     // Set positon and orientation, where to drive to
-    void setLookaheadPoint(Waypoint& pose);
+    void setLookaheadPoint(base::Waypoint& pose);
 
     // Set current orientation and position,
     // with a validity check (to avoid NaNs from Vicon)
     // If invalid pose is received, it is discarded and false is returned
-    bool setPose(Pose& pose);
+    bool setPose(base::Pose& pose);
 
     // Sets the trajecory the robot should follow
     // and calculates the distances between consecutive waypoints
-    void setTrajectory(std::vector<Waypoint*>& t);
+    void setTrajectory(std::vector<base::Waypoint*>& t);
 
     // Returns the trajectory
-    const std::vector<Waypoint*>& getTrajectory() const { return trajectory; }
+    const std::vector<base::Waypoint*>& getTrajectory() const { return trajectory; }
 
     NavigationState getNavigationState();
     void setNavigationState(NavigationState state);
 
-    const Waypoint* getLookaheadPoint();
+    const base::Waypoint* getLookaheadPoint();
 
-    bool update(MotionCommand& mc);
+    bool update(proxy_library::MotionCommand& mc);
 
     bool configure(double minR, double tv, double rv, double cr, double lad, bool backward);
 
@@ -79,7 +77,7 @@ class WaypointNavigation
 
     // Calculates a motion command (Ackermann or Point turn)
     // given the robot pose and DRIVING mode
-    void getMovementCommand(MotionCommand& mc);
+    void getMovementCommand(proxy_library::MotionCommand& mc);
 
     bool getProgressOnSegment(int segmentNumber,
                               double& progress,
@@ -114,24 +112,24 @@ class WaypointNavigation
     double alignment_deadband, alignment_saturation;
     double headingErr, alignment_P, alignment_D;
     bool pd_initialized;
-    Time tprev;
+    base::Time tprev;
 
-    Pose curPose;
-    Waypoint targetPose;
+    base::Pose curPose;
+    base::Waypoint targetPose;
 
     std::vector<double>* distanceToNext;
-    std::vector<Waypoint*> trajectory;
-    Waypoint lookaheadPoint;
+    std::vector<base::Waypoint*> trajectory;
+    base::Waypoint lookaheadPoint;
     int currentSegment;
 
-    Vector2d w1, w2, l1, l2, xr;
+    base::Vector2d w1, w2, l1, l2, xr;
 
-    // Helper function for setting values of Vector2d with X, Y of a trajectory waypoint
-    bool setSegmentWaypoint(Vector2d& waypoint, int indexSegment);
+    // Helper function for setting values of base::Vector2d with X, Y of a trajectory waypoint
+    bool setSegmentWaypoint(base::Vector2d& waypoint, int indexSegment);
 
     // Helper function for finding the closes point on the path segment
     // from the current position of the robot
-    Vector2d getClosestPointOnPath();
+    base::Vector2d getClosestPointOnPath();
 
     void initilalizeCurrentSegment();
 

@@ -87,7 +87,7 @@ double WaypointNavigation::getLookaheadDistance()
     return lookaheadDistance;
 }
 
-bool WaypointNavigation::setPose(Pose& pose)
+bool WaypointNavigation::setPose(base::Pose& pose)
 {
     if (std::isnan(pose.position(0)) || std::isnan(pose.position(1)))
     {
@@ -127,7 +127,7 @@ void WaypointNavigation::setLookaheadPoint(base::Waypoint& waypoint)
 }
 
 // Get the movement command from current pose to the current lookahead point
-void WaypointNavigation::getMovementCommand(MotionCommand& mc)
+void WaypointNavigation::getMovementCommand(proxy_library::MotionCommand& mc)
 {
     if (!targetSet || !poseSet)
     {
@@ -278,7 +278,7 @@ void WaypointNavigation::setTrajectory(std::vector<base::Waypoint*>& t)
 }
 
 // MAIN PATH FOLLOWING UPDATE FUNCTION CALLED FROM THE COMPONENT UPDATE HOOK
-bool WaypointNavigation::update(MotionCommand& mc)
+bool WaypointNavigation::update(proxy_library::MotionCommand& mc)
 {
     // 1) Update the current SEGMENT
     // Select the segment such that robot is not within the immediate reach of the 2nd Waypoint
