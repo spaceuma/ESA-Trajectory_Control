@@ -209,15 +209,16 @@ void WaypointNavigation::getMovementCommand(proxy_library::MotionCommand& mc)
 void WaypointNavigation::setTrajectory(std::vector<base::Waypoint*>& t)
 {
     // Delete old trajectory
+    /* 
     for (std::vector<base::Waypoint*>::iterator it = trajectory.begin(); it != trajectory.end();
          it++)
     {
         delete *it;
     }
+    */
     trajectory.clear();
     trajectory = t;
     targetSet = false;
-
     if (!trajectory.empty())
     {
         // Add current pose at the begining
