@@ -73,6 +73,7 @@ class WaypointNavigation
     bool configure(double minR, double tv, double rv, double cr, double lad, bool backward);
 
     bool configurePD(double P, double D, double saturation);
+    bool configureAlignment(double d_deadband, double d_saturation, double d_rotVec);
     bool configureTol(double TolPos, double TolHeading);
 
     // Calculates a motion command (Ackermann or Point turn)
@@ -86,6 +87,8 @@ class WaypointNavigation
     double getLookaheadDistance();
     void setCurrentSegment(int segmentNumber);  // TESTING ONLY - TODO Remove
     int getCurrentSegment();
+    double getTargetHeading();
+    double getHeadingError();
 
   private:
     NavigationState mNavigationState;

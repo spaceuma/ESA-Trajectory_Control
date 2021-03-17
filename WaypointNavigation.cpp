@@ -554,6 +554,18 @@ bool WaypointNavigation::update(proxy_library::MotionCommand& mc)
     return true;
 }
 
+double WaypointNavigation::getTargetHeading()
+{
+    return targetHeading;
+}
+
+
+double WaypointNavigation::getHeadingError()
+{
+    return headingErr;
+}
+
+
 base::Vector2d WaypointNavigation::getClosestPointOnPath()
 {
     // Solving for parameter k such that closestPoint = w1 + k*segVector;
@@ -753,6 +765,21 @@ inline void WaypointNavigation::saturation(double& value, double limit)
     else if (value < -limit)
     {
         value = -limit;
+    }
+}
+
+bool WaypointNavigation::configureAlignment(double d_deadband, double d_saturation, double d_rotVec)
+{
+    if (d_deadband > 0.0 && d_saturation > 0.0 && d_rotVec > 0.0)
+    { 
+        alignment_deadband = d_deadband;
+        alignment_saturation = d_saturation;
+        rotationalVelocity = d_rotVec;  // [rad/s] ... cca 8.6 deg/s
+	return true;
+    }
+    else
+    {
+        return false;
     }
 }
 
